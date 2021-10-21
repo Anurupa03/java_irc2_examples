@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.iconloop.score.example.IRC2BurnableTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2021-10-20T06:21:27" hostname="aanya-UX430UA" time="0.025">
+  <properties/>
+  <testcase name="burn()" classname="com.iconloop.score.example.IRC2BurnableTest" time="0.025"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

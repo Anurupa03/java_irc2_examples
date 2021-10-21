@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.iconloop.score.example.IRC2BasicTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2021-10-20T06:21:27" hostname="aanya-UX430UA" time="0.01">
+  <properties/>
+  <testcase name="symbol()" classname="com.iconloop.score.example.IRC2BasicTest" time="0.001"/>
+  <testcase name="totalSupply()" classname="com.iconloop.score.example.IRC2BasicTest" time="0.001"/>
+  <testcase name="name()" classname="com.iconloop.score.example.IRC2BasicTest" time="0.001"/>
+  <testcase name="balanceOf()" classname="com.iconloop.score.example.IRC2BasicTest" time="0.0"/>
+  <testcase name="decimals()" classname="com.iconloop.score.example.IRC2BasicTest" time="0.001"/>
+  <testcase name="transfer()" classname="com.iconloop.score.example.IRC2BasicTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
