@@ -1,21 +1,27 @@
 package com.iconloop.score.example;
 
-import score.Address;
-import score.annotation.External;
-import score.annotation.Optional;
+import score.Context;
 
 import java.math.BigInteger;
 
 public class IRC2PausableToken extends IRC2Pausable{
-    public IRC2PausableToken(String _name, String _symbol, int _decimals) {
+    public IRC2PausableToken(String _name, String _symbol, int _decimals, BigInteger _initialSupply) {
         super(_name, _symbol, _decimals);
+
+        // mint initial token supply
+        Context.require(_initialSupply.compareTo(BigInteger.ZERO) >= 0);
+        _mint(Context.getCaller(), _initialSupply.multiply(pow10(_decimals)));
+
     }
 
-    @External
-    public void transfer(Address _to, BigInteger _value, @Optional byte[] _data){
-        if (pauseStatus()){
-            System.out.println("The token is pause");
+    private static BigInteger pow10(int exponent) {
+        BigInteger result = BigInteger.ONE;
+        for (int i =0; i < exponent; i++) {
+            result = result.multiply(BigInteger.TEN);
         }
-//        super.transfer();
+        return result;
     }
+
+
+
 }

@@ -11,7 +11,7 @@ dependencies {
 }
 
 optimizedJar {
-    mainClassName = 'com.iconloop.score.example.IRC2MintableToken'
+    mainClassName = 'com.iconloop.score.example.IRC2PausableToken'
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
@@ -31,8 +31,8 @@ deployJar {
     keystore = rootProject.hasProperty('keystoreName') ? "$keystoreName" : ''
     password = rootProject.hasProperty('keystorePass') ? "$keystorePass" : ''
     parameters {
-        arg('_name', 'Mint')
-        arg('_symbol', 'MNT')
+        arg('_name', 'Pause')
+        arg('_symbol', 'PAS')
         arg('_decimals', '0x12')
         arg('_initialSupply', '0x3e8')
     }
