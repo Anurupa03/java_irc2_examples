@@ -16,7 +16,12 @@ public class IRC2Cap extends IRC2Basic {
 
     @External
     public void _mint(Address owner, BigInteger amount){
-        Context.require(totalSupply().add(amount).compareTo(cap()) >=0,"Cap exceeded");
+
+        BigInteger capValue = totalSupply().add(amount);
+        if (capValue.compareTo(_cap) > 0 ){
+            Context.revert("Cap exceeded ");
+        }
+//        Context.require(capValue.compareTo(_cap) <= 0,"Cap exceed");
         super._mint(owner, amount);
     }
 
