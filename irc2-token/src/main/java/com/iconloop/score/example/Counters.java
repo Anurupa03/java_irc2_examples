@@ -1,29 +1,29 @@
 package com.iconloop.score.example;
-
+// follow transactionCount
 import score.Context;
+import score.VarDB;
 
 import java.math.BigInteger;
 
 public class Counters {
 
-    protected BigInteger _value;
+    private final VarDB<BigInteger> value = Context.newVarDB("value",BigInteger.class);
 
     public BigInteger current(){
-        return this._value;
+        return value.get();
     }
 
     public void increment(){
-        _value = _value.add(BigInteger.ONE);
+        value.get().add(BigInteger.ONE);
     }
 
     public void decrement(){
-        Context.require(_value.compareTo(BigInteger.ZERO)>0,"Counter:decrement overflow");
-        _value = _value.subtract(BigInteger.ONE);
+        Context.require(value.get().compareTo(BigInteger.ZERO)>0,"Counter:decrement overflow");
+        value.get().subtract(BigInteger.ONE);
     }
 
     public void reset(){
-        _value = BigInteger.ZERO;
+        value.set(BigInteger.ZERO);
     }
-
 
 }
