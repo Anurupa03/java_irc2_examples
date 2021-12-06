@@ -2,6 +2,7 @@ package com.iconloop.score.example;
 
 import com.iconloop.score.util.EnumerableSet;
 import score.*;
+import score.annotation.EventLog;
 import score.annotation.External;
 
 import java.math.BigInteger;
@@ -15,11 +16,31 @@ public class IRC3Partial extends IRC3{
 
     private DictDB<BigInteger,AssetFunction> assets = Context.newDictDB("assets",AssetFunction.class);
 
-    private BranchDB<Address, BranchDB<BigInteger, ApproveUnits>> tokenApprovalUnits = Context.newBranchDB("tokenApprovalUnits",ApproveUnits.class);
+    private BranchDB<Address, DictDB<BigInteger, ApproveUnits>> tokenApprovalUnits = Context.newBranchDB("tokenApprovalUnits",ApproveUnits.class);
     private BranchDB<BigInteger, EnumerableSet<BigInteger>> slotTokens = Context.newBranchDB("slotTokens",EnumerableSet.class);
 
 
     private String contractURI;
+
+    // Eventlogs
+    @EventLog(indexed = 4)
+    public void Merge(Address owner, BigInteger tokenId, BigInteger targteTokenId, BigInteger units){}
+
+    @EventLog(indexed = 4)
+    public void Split(Address owner,BigInteger tokenId, BigInteger newTokenId, BigInteger units){}
+
+    @EventLog(indexed = 4)
+    public void Mint(Address minter, BigInteger tokenId, BigInteger slot, BigInteger units) {}
+
+    @EventLog(indexed = 3)
+    public void Burn(Address owner, BigInteger tokenId, BigInteger units){}
+
+    @EventLog(indexed = 4)
+    public void ApprovalUnits(Address owner, Address to, BigInteger tokenId, BigInteger units){}
+
+    @EventLog(indexed = 5)
+    public void PartialTransfer(Address from, Address to, BigInteger tokenId, BigInteger targetTokenId, BigInteger units){}
+
 
     private void setContractURI (String uri){
         this.contractURI = uri;
@@ -36,8 +57,8 @@ public class IRC3Partial extends IRC3{
 
         if (Context.getCaller() != from && ! super.isApprovedForAll(from, Context.getCaller())){
             BigInteger newUnits = balanceOf(Context.getCaller()).subtract(transferUnits);
-            tokenApprovalUnits.at(from).at(tokenId).approvals.set(Context.getCaller(),
-                            newUnits);
+            tokenApprovalUnits.at(from).get(tokenId).approvals.set(Context.getCaller(),
+                    newUnits);
         }
 
         Context.require(!ZERO_ADDRESS.equals(to),"transfer to the zero address");
@@ -52,7 +73,7 @@ public class IRC3Partial extends IRC3{
         // pass asset target tokenId as assetLibrary here
         assets.get(tokenId).transfer(aa,,transferUnits);
 
-        // emit Partial transfer eventlog here
+        PartialTransfer(from,to,tokenId,targetTokenId,transferUnits);
     }
 
     private boolean isApprovedOrOwner(Address owner, BigInteger tokenId) {
@@ -76,7 +97,8 @@ public class IRC3Partial extends IRC3{
         AssetLibrary aa = new AssetLibrary();
         BigInteger mergeUnits = assets.get(tokenId).merge(aa,assets.get(targetTokenId)); // need assetLibrary here not asset function
 
-        // emit Merge event log here
+        burn(tokenId);
+        Merge(owner,tokenId,targetTokenId,mergeUnits);
     }
 
     private void splitUnits(BigInteger tokenId, BigInteger newTokenId, BigInteger splitUnits){
@@ -86,7 +108,11 @@ public class IRC3Partial extends IRC3{
         // sub units how to access this from assets
 
         Address owner = ownerOf(tokenId);
-        mintUnits(owner,newTokenId,assets.get(tokenId).,splitUnits); // slot from assets
+        // slot from assets
+        mintUnits(owner,newTokenId,assets.get(tokenId).,splitUnits);
+
+        Split(owner,tokenId,newTokenId,splitUnits);
+
     }
 
     private void mintUnits(Address minter, BigInteger tokenId, BigInteger slot, BigInteger units){
@@ -101,17 +127,31 @@ public class IRC3Partial extends IRC3{
             slotTokens.at(slot).add(tokenId);
         }
 
-        // throw Mint event log here
+        Mint(minter,tokenId,slot,units);
     }
 
-    // brun lai override
+    private void burn(BigInteger tokenId){
+        BigInteger units = assets.get(tokenId).; // get units here
+        Address owner = ownerOf(tokenId);
+        BigInteger slot = assets.get(tokenId).;// get slot here
+        if (slotTokens.at(slot).contains(tokenId)){
+            slotTokens.at(slot).remove(tokenId);
+        }
+
+        assets.set(tokenId,);
+        tokenApprovalUnits.at(owner).set(tokenId,);
+        super._burn(tokenId);
+
+        Burn(owner,tokenId,units);
+
+    }
 
 
     private void burnUnits(BigInteger tokenId, BigInteger burnUnits){
         Address owner = ownerOf(tokenId);
-        assets.get(tokenId).burn();
+        assets.get(tokenId).burn(burnUnits);
 
-        // emit Burn evenlog here
+        Burn(owner,tokenId,burnUnits);
         return assets.get(tokenId).; // how to acess units from here
     }
 
@@ -122,10 +162,10 @@ public class IRC3Partial extends IRC3{
 
     private void approveUnits(Address owner, Address to, BigInteger tokenId, BigInteger units){
         Context.require(ownerOf(tokenId).equals(owner),"only owner");
-        tokenApprovalUnits.at(owner).at(tokenId).isValid.set(true);
-        tokenApprovalUnits.at(owner).at(tokenId).approvals.set(to,units);
+        tokenApprovalUnits.at(owner).get(tokenId).isValid.set(true);
+        tokenApprovalUnits.at(owner).get(tokenId).approvals.set(to,units);
 
-        // event log for Approval units
+        ApprovalUnits(owner,to,tokenId,units);
     }
 
     @External(readonly = true)
