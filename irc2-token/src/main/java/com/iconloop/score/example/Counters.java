@@ -7,23 +7,32 @@ import java.math.BigInteger;
 
 public class Counters {
 
-    private final VarDB<BigInteger> value = Context.newVarDB("value",BigInteger.class);
+    protected final VarDB<BigInteger> value = Context.newVarDB("value",BigInteger.class);
+
+
+//    public  void set(){
+//
+//        this.value.set(BigInteger.ZERO);
+//    }
 
     public BigInteger current(){
-        return value.get();
+        return this.value.get();
     }
 
-    public void increment(){
-        value.get().add(BigInteger.ONE);
+    public void increment(){ // which one will it be?
+        // difference between using this and value
+        this.value.set(this.value.get().add(BigInteger.ONE));
+//        value.get().add(BigInteger.ONE);
     }
 
     public void decrement(){
         Context.require(value.get().compareTo(BigInteger.ZERO)>0,"Counter:decrement overflow");
-        value.get().subtract(BigInteger.ONE);
+        this.value.set(current().subtract(BigInteger.ONE));
+//        value.get().subtract(BigInteger.ONE);
     }
 
     public void reset(){
-        value.set(BigInteger.ZERO);
+        this.value.set(BigInteger.ZERO);
     }
 
 }

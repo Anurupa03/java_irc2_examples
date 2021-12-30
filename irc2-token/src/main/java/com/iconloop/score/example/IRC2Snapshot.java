@@ -47,6 +47,7 @@ public class IRC2Snapshot2 extends IRC2Basic {
         }
     }
 
+    @External(readonly=true)
     public BigInteger balanceOfAt(Address account, BigInteger snapshotId){
         Pair<Boolean,BigInteger> valueAt = valueAt(snapshotId,id,values);
         Context.require(valueAt.getFirst());
@@ -54,6 +55,7 @@ public class IRC2Snapshot2 extends IRC2Basic {
         return balanceOf(account);
     }
 
+    @External(readonly=true)
     public BigInteger totalSupplyAt(BigInteger snapshotId){
         Pair<Boolean,BigInteger> valueAt = valueAt(snapshotId,id,values);
 
