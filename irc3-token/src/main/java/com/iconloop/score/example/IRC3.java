@@ -2,6 +2,7 @@ package com.iconloop.score.example;
 
 import com.iconloop.score.util.EnumerableIntMap;
 
+import com.iconloop.score.util.IntSet;
 import score.Address;
 import score.BranchDB;
 import score.Context;
@@ -15,10 +16,10 @@ public class IRC3 {
     protected static final Address ZERO_ADDRESS = new Address(new byte[Address.LENGTH]);
     private final String name;
     private final String symbol;
-    private final DictDB<BigInteger, Address> owners = Context.newDictDB("owners",Address.class);
+
+    private final DictDB<Address, IntSet> holderTokens = Context.newDictDB("holders", IntSet.class);
     private final EnumerableIntMap<Address> tokenOwners = new EnumerableIntMap<>("owners", Address.class);
     private final DictDB<BigInteger, Address> tokenApprovals = Context.newDictDB("approvals", Address.class);
-    private final DictDB<Address,BigInteger> balances = Context.newDictDB("balances",BigInteger.class);
     private final BranchDB<Address, DictDB<Address, Boolean>> operatorApproval = Context.newBranchDB("approval", Boolean.class);
 
     public IRC3(String _name, String _symbol){
@@ -37,19 +38,20 @@ public class IRC3 {
     }
 
     @External(readonly=true)
-    public BigInteger balanceOf(Address _owner) {
+    public int balanceOf(Address _owner) {
         Context.require(!ZERO_ADDRESS.equals(_owner));
-        return Context.getBalance(_owner);
+        var tokens = holderTokens.get(_owner);
+        return (tokens != null) ? tokens.length() : 0;
     }
 
     @External(readonly=true)
-    public Address ownerOf(BigInteger _tokenId) {
-        return tokenOwners.getOrThrow(_tokenId, "Non-existent token");
+    public Address ownerOf(BigInteger tokenId) {
+        return tokenOwners.getOrThrow(tokenId, "Non-existent token");
     }
 
     @External(readonly=true)
-    public Address getApproved(BigInteger _tokenId) {
-        return tokenApprovals.getOrDefault(_tokenId, ZERO_ADDRESS);
+    public Address getApproved(BigInteger tokenId) {
+        return tokenApprovals.getOrDefault(tokenId, ZERO_ADDRESS);
     }
 
     @External
@@ -86,6 +88,8 @@ public class IRC3 {
         // clear approvals from the previous owner
         _approve(ZERO_ADDRESS, tokenId);
 
+        _removeTokenFrom(tokenId, from);
+        _addTokenTo(tokenId, to);
         tokenOwners.set(tokenId, to);
         Transfer(from, to, tokenId);
     }
@@ -99,17 +103,39 @@ public class IRC3 {
         Context.require(!ZERO_ADDRESS.equals(to));
         Context.require(!_tokenExists(tokenId));
 
+        _addTokenTo(tokenId, to);
         tokenOwners.set(tokenId, to);
         Transfer(ZERO_ADDRESS, to, tokenId);
     }
+
+
 
     protected void _burn(BigInteger tokenId) {
         Address owner = ownerOf(tokenId);
         // clear approvals
         _approve(ZERO_ADDRESS, tokenId);
 
+        _removeTokenFrom(tokenId, owner);
         tokenOwners.remove(tokenId);
         Transfer(owner, ZERO_ADDRESS, tokenId);
+    }
+
+    private void _addTokenTo(BigInteger tokenId, Address to) {
+        var tokens = holderTokens.get(to);
+        if (tokens == null) {
+            tokens = new IntSet(to.toString());
+            holderTokens.set(to, tokens);
+        }
+        tokens.add(tokenId);
+    }
+
+    private void _removeTokenFrom(BigInteger tokenId, Address from) {
+        var tokens = holderTokens.get(from);
+        Context.require(tokens != null, "tokens don't exist for this address");
+        tokens.remove(tokenId);
+        if (tokens.length() == 0) {
+            holderTokens.set(from, null);
+        }
     }
 
     @External(readonly = true)

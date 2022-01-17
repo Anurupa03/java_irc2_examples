@@ -1,6 +1,5 @@
 package com.iconloop.score.example;
 
-import com.iconloop.score.token.irc2.IRC2Basic;
 import score.Address;
 import score.Context;
 import score.annotation.External;
@@ -8,33 +7,34 @@ import score.annotation.Optional;
 
 import java.math.BigInteger;
 
-public class IRC2Pausable extends IRC2Basic {
+public class IRC2Pausable extends Basic {
 
-    private boolean _pause;
-    public IRC2Pausable(String _name, String _symbol, int _decimals) {
-        super(_name, _symbol, _decimals);
+    private boolean pause;
+    public IRC2Pausable(String name, String symbol, int decimals) {
+        super(name, symbol, decimals);
     }
 
     @External
     public void pause(){
-        Context.require(Context.getCaller().equals(Context.getOwner()),"Only owners can pause");
+        Context.require(Context.getCaller().equals(Context.getOwner()),"Pause: Only owner can pause token transfer");
         setPause(true);
     }
 
     @External
     public void unpause(){
-        Context.require(Context.getCaller().equals(Context.getOwner()),"Only owner can unpause");
+        Context.require(Context.getCaller().equals(Context.getOwner()),"Pause: Only owner can unpause token transfer");
         setPause(false);
     }
 
     @External
-    public void setPause(boolean _pause){
-        this._pause = _pause;
+    public boolean setPause(boolean pauseVal){
+        this.pause = pauseVal;
+        return pauseVal;
     }
 
     @External
     public boolean getPause(){
-        return this._pause;
+        return this.pause;
     }
 
     @External
@@ -43,10 +43,14 @@ public class IRC2Pausable extends IRC2Basic {
     }
 
     @External
-    public void transfer(Address _to, BigInteger _value, @Optional byte[] _data){
-        Context.require(Context.getCaller().equals(Context.getOwner()),"Only owners can transfer tokens");
-        Context.require(!pauseStatus(),"The token is already paused");
-        super.transfer(_to, _value, _data);
+    // do i need to add @override here?
+    public void transfer(Address to, BigInteger value, @Optional byte[] data){
+        if (data == null){
+            data ="transfer".getBytes();
+        }
+        Context.require(Context.getCaller().equals(Context.getOwner()),"Transfer:Only owners can transfer token");
+        Context.require(!pauseStatus(),"Transfer: Paused token can not be transferred");
+        super.transfer(to, value, data);
     }
 
 }

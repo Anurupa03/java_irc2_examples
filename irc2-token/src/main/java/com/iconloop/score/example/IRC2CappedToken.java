@@ -1,23 +1,22 @@
 package com.iconloop.score.example;
 
-import com.iconloop.score.token.irc2.IRC2Basic;
 import score.Address;
 import score.Context;
 import score.annotation.External;
 
 import java.math.BigInteger;
 
-public class IRC2CappedToken extends IRC2Basic {
+public class IRC2CappedToken extends Basic {
 
-    private BigInteger cap;
-    public IRC2CappedToken(String _name, String _symbol, int _decimals, BigInteger _initialSupply, BigInteger _cap) {
-        super(_name, _symbol, _decimals);
-        this.cap = _cap.multiply(pow10(_decimals));
+    private final BigInteger cap;
+    public IRC2CappedToken(String name, String symbol, int decimals, BigInteger initialSupply, BigInteger cap) {
+        super(name, symbol, decimals);
+        this.cap = cap.multiply(pow10(decimals));
 
         // mint the initial token supply here
-        Context.require(_initialSupply.compareTo(BigInteger.ZERO) >= 0);
-        Context.require(_cap.compareTo(BigInteger.ZERO) >= 0);
-        _mint(Context.getCaller(), _initialSupply.multiply(pow10(_decimals)));
+        Context.require(initialSupply.compareTo(BigInteger.ZERO) >= 0);
+        Context.require(cap.compareTo(BigInteger.ZERO) >= 0);
+        _mint(Context.getCaller(), initialSupply.multiply(pow10(decimals)));
     }
 
     private static BigInteger pow10(int exponent) {
@@ -30,16 +29,16 @@ public class IRC2CappedToken extends IRC2Basic {
 
     @External
     public void mint(BigInteger amount){
-        Context.require(Context.getCaller().equals(Context.getOwner()),"Only owners can mint tokens");
-        Context.require(cap().compareTo(super.totalSupply().add(amount)) >=0, "cap exceeded");
+        Context.require(Context.getCaller().equals(Context.getOwner()),"Only owner can mint tokens");
+        Context.require(cap().compareTo(super.totalSupply().add(amount)) >=0, "Cap:capped exceeded");
         super._mint(Context.getCaller(), amount);
     }
 
     @External
-    public void mintTo(Address _to, BigInteger amount){
+    public void mintTo(Address to, BigInteger amount){
         Context.require(Context.getCaller().equals(Context.getOwner()),"Only owners can mint tokens");
-        Context.require(cap().compareTo(super.totalSupply().add(amount)) >=0, "cap exceeded");
-        super._mint(_to, amount);
+        Context.require(cap().compareTo(super.totalSupply().add(amount)) >=0, "Cap:capped exceeded");
+        super._mint(to, amount);
     }
 
     @External(readonly = true)
