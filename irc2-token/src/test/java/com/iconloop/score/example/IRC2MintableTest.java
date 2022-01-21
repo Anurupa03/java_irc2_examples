@@ -129,24 +129,5 @@
 //        expectErrorMessage(setMinterByOwnerCall,expectedErrorMessage);
 //    }
 //
-//// TO BE REVIEWED
-////    @DisplayName("Checking account's address is minter or not")
-////    @Test
-////    void isMinterTest(){
-////        Account testAccount = sm.createAccount();
-////        tokenScore.invoke(owner,"isMinter",owner.getAddress());
-////        assertEquals(true,tokenScore.call("isMinter",owner.getAddress()) );
-////
-////        //checking another address
-////        Executable isMinterCall = () -> isMinter(testAccount.getAddress());
-////        String expectedErrorMessage = "Mint:Address is not a minter";
-////        expectErrorMessage(isMinterCall,expectedErrorMessage);
-////
-////        // setting another address as minter
-////        tokenScore.invoke(owner,"setMinter",testAccount.getAddress());
-////        assertEquals(true,tokenScore.call("isMinter",testAccount.getAddress()));
-////
-////    }
-//
 //
 //}

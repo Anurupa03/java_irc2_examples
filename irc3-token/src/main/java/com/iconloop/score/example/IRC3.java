@@ -1,158 +1,71 @@
 package com.iconloop.score.example;
 
-import com.iconloop.score.util.EnumerableIntMap;
-
-import com.iconloop.score.util.IntSet;
 import score.Address;
-import score.BranchDB;
-import score.Context;
-import score.DictDB;
-import score.annotation.EventLog;
-import score.annotation.External;
 
 import java.math.BigInteger;
 
-public class IRC3 {
-    protected static final Address ZERO_ADDRESS = new Address(new byte[Address.LENGTH]);
-    private final String name;
-    private final String symbol;
+public interface IRC3 {
+    /**
+     * Returns the name of the token. (e.g. "CryptoBears")
+     */
+    String name();
 
-    private final DictDB<Address, IntSet> holderTokens = Context.newDictDB("holders", IntSet.class);
-    private final EnumerableIntMap<Address> tokenOwners = new EnumerableIntMap<>("owners", Address.class);
-    private final DictDB<BigInteger, Address> tokenApprovals = Context.newDictDB("approvals", Address.class);
-    private final BranchDB<Address, DictDB<Address, Boolean>> operatorApproval = Context.newBranchDB("approval", Boolean.class);
+    /**
+     * Returns the symbol of the token. (e.g. "CBT")
+     */
+    String symbol();
 
-    public IRC3(String _name, String _symbol){
-        this.name = _name;
-        this.symbol =_symbol;
-    }
+    /**
+     * Returns the number of NFTs owned by {@code _owner}.
+     * NFTs assigned to the zero address are considered invalid,
+     * so this function SHOULD throw for queries about the zero address.
+     */
+    int balanceOf(Address _owner);
 
-    @External(readonly=true)
-    public String name() {
-        return name;
-    }
+    /**
+     * Returns the owner of an NFT.
+     * Throws if {@code _tokenId} is not a valid NFT.
+     */
+    Address ownerOf(BigInteger _tokenId);
 
-    @External(readonly=true)
-    public String symbol() {
-        return symbol;
-    }
+    /**
+     * Returns the approved address for a single NFT.
+     * If there is none, returns the zero address.
+     * Throws if {@code _tokenId} is not a valid NFT.
+     */
+    Address getApproved(BigInteger _tokenId);
 
-    @External(readonly=true)
-    public int balanceOf(Address _owner) {
-        Context.require(!ZERO_ADDRESS.equals(_owner));
-        var tokens = holderTokens.get(_owner);
-        return (tokens != null) ? tokens.length() : 0;
-    }
+    /**
+     * Allows {@code _to} to change the ownership of {@code _tokenId} from your account.
+     * The zero address indicates there is no approved address.
+     * Throws unless the caller is the current NFT owner.
+     */
+    void approve(Address _to, BigInteger _tokenId);
 
-    @External(readonly=true)
-    public Address ownerOf(BigInteger tokenId) {
-        return tokenOwners.getOrThrow(tokenId, "Non-existent token");
-    }
+    /**
+     * Transfers the ownership of your NFT to another address, and MUST fire the {@code Transfer} event.
+     * Throws unless the caller is the current owner.
+     * Throws if {@code _to} is the zero address.
+     * Throws if {@code _tokenId} is not a valid NFT.
+     */
+    void transfer(Address _to, BigInteger _tokenId);
 
-    @External(readonly=true)
-    public Address getApproved(BigInteger tokenId) {
-        return tokenApprovals.getOrDefault(tokenId, ZERO_ADDRESS);
-    }
+    /**
+     * Transfers the ownership of an NFT from one address to another address, and MUST fire the {@code Transfer} event.
+     * Throws unless the caller is the current owner or the approved address for the NFT.
+     * Throws if {@code _from} is not the current owner.
+     * Throws if {@code _to} is the zero address.
+     * Throws if {@code _tokenId} is not a valid NFT.
+     */
+    void transferFrom(Address _from, Address _to, BigInteger _tokenId);
 
-    @External
-    public void approve(Address _to, BigInteger _tokenId) {
-        Address owner = ownerOf(_tokenId);
-        Context.require(!owner.equals(_to));
-        Context.require(owner.equals(Context.getCaller()));
-        _approve(_to, _tokenId);
-    }
+    /**
+     * (EventLog) Must trigger on any successful token transfers.
+     */
+    void Transfer(Address _from, Address _to, BigInteger _tokenId);
 
-    private void _approve(Address to, BigInteger tokenId) {
-        tokenApprovals.set(tokenId, to);
-        Approval(ownerOf(tokenId), to, tokenId);
-    }
-
-    @External
-    public void transfer(Address _to, BigInteger _tokenId) {
-        Address owner = ownerOf(_tokenId);
-        Context.require(owner.equals(Context.getCaller()));
-        _transfer(owner, _to, _tokenId);
-    }
-
-    @External
-    public void transferFrom(Address _from, Address _to, BigInteger _tokenId) {
-        Address owner = ownerOf(_tokenId);
-        Address spender = Context.getCaller();
-        Context.require(owner.equals(spender) || getApproved(_tokenId).equals(spender));
-        _transfer(_from, _to, _tokenId);
-    }
-
-    private void _transfer(Address from, Address to, BigInteger tokenId) {
-        Context.require(ownerOf(tokenId).equals(from));
-        Context.require(!to.equals(ZERO_ADDRESS));
-        // clear approvals from the previous owner
-        _approve(ZERO_ADDRESS, tokenId);
-
-        _removeTokenFrom(tokenId, from);
-        _addTokenTo(tokenId, to);
-        tokenOwners.set(tokenId, to);
-        Transfer(from, to, tokenId);
-    }
-
-    @External(readonly=true)
-    public int totalSupply() {
-        return tokenOwners.length();
-    }
-
-    protected void _mint(Address to, BigInteger tokenId) {
-        Context.require(!ZERO_ADDRESS.equals(to));
-        Context.require(!_tokenExists(tokenId));
-
-        _addTokenTo(tokenId, to);
-        tokenOwners.set(tokenId, to);
-        Transfer(ZERO_ADDRESS, to, tokenId);
-    }
-
-
-
-    protected void _burn(BigInteger tokenId) {
-        Address owner = ownerOf(tokenId);
-        // clear approvals
-        _approve(ZERO_ADDRESS, tokenId);
-
-        _removeTokenFrom(tokenId, owner);
-        tokenOwners.remove(tokenId);
-        Transfer(owner, ZERO_ADDRESS, tokenId);
-    }
-
-    private void _addTokenTo(BigInteger tokenId, Address to) {
-        var tokens = holderTokens.get(to);
-        if (tokens == null) {
-            tokens = new IntSet(to.toString());
-            holderTokens.set(to, tokens);
-        }
-        tokens.add(tokenId);
-    }
-
-    private void _removeTokenFrom(BigInteger tokenId, Address from) {
-        var tokens = holderTokens.get(from);
-        Context.require(tokens != null, "tokens don't exist for this address");
-        tokens.remove(tokenId);
-        if (tokens.length() == 0) {
-            holderTokens.set(from, null);
-        }
-    }
-
-    @External(readonly = true)
-    public boolean _tokenExists(BigInteger tokenId) {
-        return tokenOwners.contains(tokenId);
-    }
-
-    @External(readonly=true)
-    public boolean isApprovedForAll(Address _owner, Address _operator) {
-        return operatorApproval.at(_owner).getOrDefault(_operator, false);
-    }
-
-    @EventLog(indexed=3)
-    public void Transfer(Address _from, Address _to, BigInteger _tokenId) {
-    }
-
-    @EventLog(indexed=3)
-    public void Approval(Address _owner, Address _approved, BigInteger _tokenId) {
-    }
+    /**
+     * (EventLog) Must trigger on any successful call to {@code approve(Address, int)}.
+     */
+    void Approval(Address _owner, Address _approved, BigInteger _tokenId);
 }

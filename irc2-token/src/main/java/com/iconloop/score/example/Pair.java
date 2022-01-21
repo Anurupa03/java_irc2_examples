@@ -1,5 +1,6 @@
 package com.iconloop.score.example;
 
+// tuple designed for valueAt function of snapshot
 public class Pair<A,B> {
     public final A a;
     public final B b;
@@ -17,5 +18,3 @@ public class Pair<A,B> {
         return this.b;
     }
 }
-
-

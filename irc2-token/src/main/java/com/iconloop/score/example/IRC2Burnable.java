@@ -5,7 +5,7 @@ import score.annotation.External;
 
 import java.math.BigInteger;
 
-public class IRC2Burnable extends  Basic{
+public class IRC2Burnable extends IRC2Basic{
     public IRC2Burnable(String name, String symbol, int decimals) {
         super(name, symbol, decimals);
     }

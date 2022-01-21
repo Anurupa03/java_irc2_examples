@@ -9,23 +9,23 @@ import java.math.BigInteger;
 
 public class IRC3Metadata {
 
-    private final String name;
-    private final String symbol;
+    protected final String name;
+    protected final String symbol;
 
-    public IRC3Metadata(String _name, String _symbol){
-        this.name = _name;
-        this.symbol = _symbol;
+    public IRC3Metadata(String name, String symbol){
+        this.name = name;
+        this.symbol = symbol;
     }
 
     private final DictDB<BigInteger, String> tokenURIs = Context.newDictDB("token_uri", String.class);
 
     @External(readonly=true)
-    public String tokenURI(BigInteger _id) {
-        return tokenURIs.get(_id);
+    public String tokenURI(BigInteger id) {
+        return tokenURIs.get(id);
     }
 
     @EventLog(indexed=1)
-    public void URI(BigInteger _id, String _value) {}
+    public void URI(BigInteger id, String value) {}
 
     protected void _setTokenURI(BigInteger _id, String _uri) {
         Context.require(_uri.length() > 0, "Uri should be set");

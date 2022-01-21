@@ -6,12 +6,11 @@ import score.annotation.External;
 
 import java.math.BigInteger;
 
-public class IRC2CappedToken extends Basic {
-
+public class IRC2CappedToken extends IRC2Basic{
     private final BigInteger cap;
     public IRC2CappedToken(String name, String symbol, int decimals, BigInteger initialSupply, BigInteger cap) {
         super(name, symbol, decimals);
-        this.cap = cap.multiply(pow10(decimals));
+        this.cap = cap.multiply(BigInteger.TEN.pow(decimals));
 
         // mint the initial token supply here
         Context.require(initialSupply.compareTo(BigInteger.ZERO) >= 0);
@@ -43,7 +42,5 @@ public class IRC2CappedToken extends Basic {
 
     @External(readonly = true)
     public BigInteger cap(){
-        return this.cap;
-    }
-
+        return this.cap; }
 }

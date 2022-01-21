@@ -1,11 +1,10 @@
 package com.iconloop.score.example;
 
-
 import score.ArrayDB;
 
 import java.math.BigInteger;
 
-public class ArraysUtil {
+public class ArrayUtils {
 
     public static BigInteger upperBound(ArrayDB<BigInteger> ar, BigInteger element) {
         if (ar.size() == 0){

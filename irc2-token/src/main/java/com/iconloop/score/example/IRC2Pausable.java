@@ -7,7 +7,7 @@ import score.annotation.Optional;
 
 import java.math.BigInteger;
 
-public class IRC2Pausable extends Basic {
+public class IRC2Pausable extends IRC2Basic{
 
     private boolean pause;
     public IRC2Pausable(String name, String symbol, int decimals) {
@@ -27,9 +27,8 @@ public class IRC2Pausable extends Basic {
     }
 
     @External
-    public boolean setPause(boolean pauseVal){
+    public void setPause(boolean pauseVal){
         this.pause = pauseVal;
-        return pauseVal;
     }
 
     @External
@@ -52,5 +51,4 @@ public class IRC2Pausable extends Basic {
         Context.require(!pauseStatus(),"Transfer: Paused token can not be transferred");
         super.transfer(to, value, data);
     }
-
 }
