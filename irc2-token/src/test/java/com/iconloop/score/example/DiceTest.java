@@ -9,10 +9,12 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
+import score.Context;
 
 import java.math.BigInteger;
 
 import static java.math.BigInteger.TEN;
+import static java.math.BigInteger.valueOf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.spy;
 
@@ -21,37 +23,31 @@ public class DiceTest extends TestBase {
     private static final String symbol = "DIC";
     private static final int decimals = 18;
     private static final BigInteger initialSupply = BigInteger.valueOf(1000);
-    private static Boolean onUdateVar = false;
-    private static BigInteger totalSupply = initialSupply.multiply(TEN.pow(decimals));
+    private static final Boolean onUdateVar = false;
+    private static final BigInteger totalSupply = initialSupply.multiply(TEN.pow(decimals));
 
     private static final ServiceManager sm = getServiceManager();
     private static final Account owner = sm.createAccount();
     private static final Account testAccount = sm.createAccount();
     private static Score tokenScore;
-    private static Dice2 tokenSpy;
+    private static Dice tokenSpy;
 
     @BeforeAll
     public static void setup() throws Exception{
-        tokenScore = sm.deploy(owner,Dice2.class,name,symbol,decimals,initialSupply,onUdateVar);
+        tokenScore = sm.deploy(owner,Dice.class,onUdateVar);
         owner.addBalance(symbol, totalSupply);
 
-        tokenSpy = (Dice2) spy(tokenScore.getInstance());
+        tokenSpy = (Dice) spy(tokenScore.getInstance());
         tokenScore.setInstance(tokenSpy);
-    }
-
-    @Test
-    void toggle_game_status(){
-        assertEquals(false,tokenScore.call("getGameStatus"));
-        tokenScore.invoke(owner,"toggleGameStatus");
-        assertEquals(true,tokenScore.call("getGameStatus"));
     }
 
     public void bet(Account owner,BigInteger upper,BigInteger lower, String userSeed, BigInteger sideBetAmount,
                     String sideBetType){
-        tokenScore.invoke(owner,"setDiceScore",tokenScore.getAddress());
-//        tokenScore.invoke(owner,"toggleGameStatus");
+        tokenScore.invoke(owner,"set_dice_score",tokenScore.getAddress());
+//        tokenScore.invoke(owner,"set_dice_score","cxe36ce66a334f0ef311cb29d7833ebbfe2637f4e1");
+        tokenScore.invoke(owner,"toggle_game_status");
         try {
-            tokenScore.invoke(owner,"callBet",upper,lower,userSeed,sideBetAmount,sideBetType);
+            tokenScore.invoke(owner,"call_bet",upper,lower,userSeed,sideBetAmount,sideBetType);
         }
         catch (AssertionError error){
             throw error;
@@ -63,6 +59,13 @@ public class DiceTest extends TestBase {
         assertEquals(errorMessage, e.getMessage());
     }
 
+    @Test
+    void toggle_game_status(){
+        assertEquals(false,tokenScore.call("get_game_status"));
+        tokenScore.invoke(owner,"toggle_game_status");
+        assertEquals(true,tokenScore.call("get_game_status"));
+    }
+
     @DisplayName("Range of upper and lower value")
     @Test
     void upper_and_lower_range_test(){
@@ -72,43 +75,50 @@ public class DiceTest extends TestBase {
         BigInteger sideBetAmount = BigInteger.valueOf(2).multiply(TEN.pow(decimals));
         String sideBetType = "digits_match";
 
-        tokenScore.invoke(owner,"toggleGameStatus");
-
         Executable upperCall = () -> bet(owner,BigInteger.valueOf(100),lower,userSeed,sideBetAmount,sideBetType);
-        String expectedErrorMessage = "Invalid bet.";
+        String expectedErrorMessage = "Reverted(0): Invalid bet. Choose a number between 0 to 99";
         expectErrorMessage(upperCall,expectedErrorMessage);
-
-        Executable LowerCall = () -> bet(owner,upper,BigInteger.valueOf(100),userSeed,sideBetAmount,sideBetType);
-        String expectedErrorMessageLower = "Invalid bet.";
-        expectErrorMessage(LowerCall,expectedErrorMessageLower);
-
-
     }
 
     @Test
     void gap_test(){
-        BigInteger upper = BigInteger.valueOf(7);
-        BigInteger lower = BigInteger.valueOf(20);
+        BigInteger upper = BigInteger.valueOf(20);
+        BigInteger lower = BigInteger.valueOf(2);
         String userSeed = "";
         BigInteger sideBetAmount = BigInteger.valueOf(2).multiply(TEN.pow(decimals));
         String sideBetType = "digits_match";
 
-        Executable upperAndLowerCall = () -> bet(owner,BigInteger.valueOf(96),lower,userSeed,sideBetAmount,sideBetType);
-        String expectedErrorMessage = "Invalid gap. Choose upper and lower values such that gap is between 0 to 95";
+        Executable upperAndLowerCall = () -> bet(owner,BigInteger.valueOf(99),lower,userSeed,sideBetAmount,sideBetType);
+        String expectedErrorMessage = "Reverted(0): Invalid gap. Choose upper and lower values such that gap is between 0 to 95";
+        expectErrorMessage(upperAndLowerCall,expectedErrorMessage);
+
+    }
+
+    @Test
+    void side_bet_test(){
+        BigInteger upper = BigInteger.valueOf(70);
+        BigInteger lower = BigInteger.valueOf(20);
+        String userSeed = "";
+        BigInteger sideBetAmount = BigInteger.ZERO;
+        String sideBetType = "digits_match";
+
+        Executable upperAndLowerCall = () -> bet(owner,BigInteger.valueOf(99),lower,userSeed,sideBetAmount,sideBetType);
+        String expectedErrorMessage = "Reverted(0): should set both side bet type as well as side bet amount";
         expectErrorMessage(upperAndLowerCall,expectedErrorMessage);
     }
 
     @Test
     void betTest(){
-        tokenScore.invoke(owner,"setDiceScore",tokenScore.getAddress());
-        tokenScore.invoke(owner,"toggleGameStatus");
+        tokenScore.invoke(owner,"set_dice_score",tokenScore.getAddress());
+        tokenScore.invoke(owner,"toggle_game_status");
         BigInteger upper = BigInteger.valueOf(70);
         BigInteger lower = BigInteger.valueOf(20);
         String userSeed = "";
         BigInteger sideBetAmount = BigInteger.valueOf(2).multiply(TEN.pow(decimals));
         String sideBetType = "digits_match";
-        tokenScore.invoke(owner,"callBet",upper,lower,userSeed,sideBetAmount,sideBetType);
+        // tokenScore.call(owner,true,BigInteger.valueOf(100),"callBet",upper,lower,userSeed,sideBetAmount,sideBetType);
+        tokenScore.invoke(owner,"call_bet",upper,lower,userSeed,sideBetAmount,sideBetType);
 
-       
+
     }
 }
